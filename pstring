@@ -8,46 +8,55 @@ end_string:    .string "/0"
 .align 8
 
 .switch_case:
-        .quad .pstrlen
+        .quad .case_50_60
         .quad .default
-        .quad .replace_char
-        .quad .pstrijcpy
-        .quad .swap_case
-        .quad .pstrijcmp
-        .quad .default
-        .quad .default
+        .quad .case_52
+        .quad .case_53
+        .quad .case_54
+        .quad .case_55
         .quad .default
         .quad .default
-        .quad .pstrlen
+        .quad .default
+        .quad .default
+        .quad .case_50_60
         
-.text     
+.text 
+.globl pstrlen
+.type  pstrlen,    @function 
+pstrlen:
+    movzbq  -1(%rdi), %rax #go before the string- the length of the string
+    ret
+
+
+      
+            
+                        
 .globl run_func
 .type  run_func,    @function   
 run_func:
-    
     subq $50, %rdx
     cmpq $10, %rdx
     ja   .default
     jmp  *.switch_case(,%rdx,8)
+.func_done:
     
-    xorq  %rax,%rax
-    movq  %rbp, %rsp
-    popq  %rbp 
     ret
     
-.pstrlen:
+.case_50_60:
+subq $50, %rcx
+call pstrlen
+jmp .func_done
+
+.case_52:
 subq $50, %rcx
 
-.replace_char:
+.case_53:
 subq $50, %rcx
 
-.pstrijcpy:
+.case_54:
 subq $50, %rcx
 
-.swap_case:
-subq $50, %rcx
-
-.pstrijcmp:
+.case_55:
 subq $50, %rcx
 
 .default:
@@ -122,6 +131,7 @@ main:
     leaq -527(%rbp), %rdi
     leaq -270(%rbp), %rsi
     call run_func
+    
    
     xorq  %rax,%rax
     movq  %rbp, %rsp
