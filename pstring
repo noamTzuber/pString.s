@@ -1,0 +1,131 @@
+#313374837 Noam Tzuberi 
+.data
+.section      .rodata
+int_format:    .string " %d"
+string_format: .string " %s"
+end_string:    .string "/0"
+
+.align 8
+
+.switch_case:
+        .quad .pstrlen
+        .quad .default
+        .quad .replace_char
+        .quad .pstrijcpy
+        .quad .swap_case
+        .quad .pstrijcmp
+        .quad .default
+        .quad .default
+        .quad .default
+        .quad .default
+        .quad .pstrlen
+        
+.text     
+.globl run_func
+.type  run_func,    @function   
+run_func:
+    
+    subq $50, %rdx
+    cmpq $10, %rdx
+    ja   .default
+    jmp  *.switch_case(,%rdx,8)
+    
+    xorq  %rax,%rax
+    movq  %rbp, %rsp
+    popq  %rbp 
+    ret
+    
+.pstrlen:
+subq $50, %rcx
+
+.replace_char:
+subq $50, %rcx
+
+.pstrijcpy:
+subq $50, %rcx
+
+.swap_case:
+subq $50, %rcx
+
+.pstrijcmp:
+subq $50, %rcx
+
+.default:
+subq $50, %rcx
+
+        
+
+
+     
+.globl main
+.type  main,    @function
+main:
+    movq %rsp, %rbp #for correct debugging
+    pushq %rbp
+    movq  %rsp, %rbp #for correct debugging
+    subq  $528,%rsp
+    xorq  %rax,%rax
+    movq  $int_format, %rdi
+    leaq  -528(%rbp), %rsi
+    call  scanf
+    call  printf
+    
+
+    xorq  %rax,%rax
+    movq  $string_format, %rdi
+    leaq  -527(%rbp), %rsi
+    call  scanf
+    xorq  %rcx,%rcx
+    movb  -528(%rbp), %cl
+    leaq  -527(%rbp, %rcx), %r10
+    movq  $0, (%r10)
+    
+
+
+    movq  $string_format, %rdi
+    leaq  -527(%rbp), %rsi
+    xorq  %rax,%rax
+    call  printf
+    ######################
+    xorq  %rax,%rax
+    movq  $int_format, %rdi
+    leaq  -271(%rbp), %rsi
+    call  scanf
+    call  printf
+    
+
+    xorq  %rax,%rax
+    movq  $string_format, %rdi
+    leaq  -270(%rbp), %rsi
+    call  scanf
+    xorq  %rcx,%rcx
+    movb  -271(%rbp), %cl
+    leaq  -270(%rbp, %rcx), %r10
+    movq  $0, (%r10)
+
+
+    movq  $string_format, %rdi
+    leaq  -270(%rbp), %rsi
+    xorq  %rax,%rax
+    call  printf
+    ##################################
+    
+    xorq  %rax,%rax
+    movq  $int_format, %rdi
+    leaq  -14(%rbp), %rsi
+    call  scanf
+    call  printf
+    
+    # for moving the a
+    xorq  %rdx,%rdx
+    movb -14(%rbp), %dl
+    leaq -527(%rbp), %rdi
+    leaq -270(%rbp), %rsi
+    call run_func
+   
+    xorq  %rax,%rax
+    movq  %rbp, %rsp
+    popq  %rbp 
+    ret
+    
+
