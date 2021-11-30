@@ -1,0 +1,390 @@
+#313374837 Noam Tzuberi 
+.data
+.section        .rodata
+char_format:           .string  " %c"
+int_format:            .string " %d"
+string_format:         .string " %s"
+end_string:            .string "/0"
+pstrlen_format:        .string "first pstring length: %d,second pstring length: %d\n"
+replace_char_format:   .string "old char: %c, new char: %c, first string: %s, second string: %s\n"
+invalid_input:         .string "invalid input!\n"
+pstrijcpy_char_format: .string "length: %d, string: %s\n"
+
+.align 8
+
+.switch_case:
+        .quad .case_50_60
+        .quad .default
+        .quad .case_52
+        .quad .case_53
+        .quad .case_54
+        .quad .case_55
+        .quad .default
+        .quad .default
+        .quad .default
+        .quad .default
+        .quad .case_50_60
+        
+.text 
+.globl pstrlen
+.type  pstrlen,    @function 
+pstrlen:
+    movzbq  (%rdi), %rax #go before the string- the length of the string
+    ret
+
+
+.globl replaceChar
+.type  replaceChar,    @function 
+replaceChar:
+    pushq %rbp
+    movq  %rsp, %rbp #for correct debugging  
+    movq  %rdi,%rcx
+.back_loop_replace:
+    incq %rdi
+    cmpb $0,(%rdi)
+    je .end_string
+    cmpb %sil,(%rdi)
+    jne .back_loop_replace  #move all the given idex area
+    movb %dl,(%rdi)
+    jmp .back_loop_replace  #for changing the index
+    
+    
+.end_string:
+    movq  %rcx,%rax
+    movq  %rbp, %rsp
+    popq  %rbp 
+    ret
+       
+    
+.globl pstrijcpy
+.type  pstrijcpy,    @function   
+pstrijcpy:
+    pushq  %rbp
+    movq   %rsp, %rbp
+    pushq  %rdi
+    
+    movzbq (%rdi),%r8
+    cmpq   %r8 ,%rcx
+    jge  .invalid_input    # check if the i,j not valid
+    cmpq   %r8,%rdx 
+    jge  .invalid_input
+    
+    movzbq (%rsi),%r9
+    cmpq   %r9,%rcx
+    jge  .invalid_input
+    cmpq   %r9,%rdx 
+    jge  .invalid_input
+    
+    cmp   %rcx,%rdx
+    jg  .invalid_input
+
+    incq %rdi 
+    incq %rsi             # move to s[i]
+    leaq (%rdi,%rdx),%rdi
+    leaq (%rsi,%rdx),%rsi
+    
+.back_loop_pstrijcpy: 
+    cmp   %rcx,%rdx
+    jg    .finish_pstrijcpy
+    movb  (%rsi),%r11b
+    movb  %r11b,(%rdi)
+    incq  %rdi
+    incq  %rsi
+    incq  %rdx
+    jmp   .back_loop_pstrijcpy
+    
+.finish_pstrijcpy:
+  
+    popq   %rax 
+    movq   %rbp,%rsp
+    popq   %rbp
+    ret  
+     
+
+.invalid_input:
+
+    movq   $invalid_input,%rdi
+    xorq   %rax,%rax   
+    call   printf
+    popq   %rax 
+    movq   %rbp,%rsp
+    popq   %rbp
+    ret  
+
+.globl swap_case
+.type swap_case,    @function        
+swap_case:  
+     pushq  %rbp
+     movq   %rsp, %rbp        
+     leaq (%rdi),%r8
+     
+.back_loop_swap_case: 
+     inc   %rdi   
+     cmpb  $0,(%rdi)
+     je .finish_swap_case
+     cmpb  $65,(%rdi)    # to check once if bigger then the wanted latter
+     jl .back_loop_swap_case
+     cmpb  $122,(%rdi)
+     jg .back_loop_swap_case
+     cmpb  $91,(%rdi)
+     jl .change_little
+     cmpb  $96,(%rdi)
+     jg  .change_big
+     jmp .back_loop_swap_case
+     
+     
+     
+.change_big:
+    subb $32,(%rdi)
+    jmp .back_loop_swap_case
+.change_little:    
+
+    addb $32,(%rdi)
+    jmp .back_loop_swap_case
+        
+     
+     
+.finish_swap_case:
+    
+    movq   %r8,%rax 
+    movq   %rbp,%rsp
+    popq   %rbp
+    ret  
+     
+     
+         
+             
+     dec %r8                 
+                        
+.globl run_func
+.type  run_func,    @function   
+run_func:
+    pushq %rbp
+    movq  %rsp, %rbp #for correct debugging
+    subq  $50, %rdx
+    cmpq  $10, %rdx
+    ja   .default
+    jmp  *.switch_case(,%rdx,8)
+    
+.func_done:
+    xorq  %rax,%rax
+    movq  %rbp, %rsp
+    popq  %rbp 
+    ret
+    
+.case_50_60:
+    pushq %rbp
+    movq  %rbp, %rsp
+    call pstrlen
+    movq %rax,%r10
+    movq %rsi,%rdi
+    call pstrlen
+    movq %rax,%r11
+    movq $pstrlen_format, %rdi
+    xorq %rax,%rax
+    movq %r10, %rsi
+    movq %r11, %rdx
+    call printf
+    
+    xorq  %rax,%rax
+    movq  %rbp, %rsp
+    popq  %rbp 
+    
+    jmp .func_done
+    
+ 
+    
+  
+ .case_52:
+   
+    pushq %rbp
+    movq  %rbp, %rsp          # creating place in stack
+    pushq %rbx                # for using 12,rbx
+    pushq %r12        
+    subq  $16,%rsp
+    movq  %rdi,%rbx           # saving the string
+    movq  %rsi,%r12
+    xorq  %rax,%rax
+    movq  $char_format, %rdi  # format for scan the letters
+    leaq  -32(%rbp), %rsi
+    call  scanf
+    
+    xorq  %rax,%rax
+    movq  $char_format, %rdi  
+    leaq  -24(%rbp), %rsi
+    call  scanf
+   
+    movq  %rbx,%rdi           # arguments for replacechar
+    movzbq  -32(%rbp),%rsi
+    movzbq  -24(%rbp),%rdx
+    call replaceChar
+    movq %rax, %rbx           # saving the return argument 
+    
+    
+    movq  %r12,%rdi 
+    movzbq  -32(%rbp),%rsi
+    movzbq  -24(%rbp),%rdx         # arguments for replacechar
+    call replaceChar
+    movq %rax, %r12
+    
+    xorq %rax,%rax 
+    movq $replace_char_format,%rdi 
+    movq -32(%rbp),%rsi
+    movq -24(%rbp),%rdx
+    leaq 1(%rbx),%rcx
+    leaq 1(%r12),%r8
+    
+    call printf
+    
+    popq %rax
+    popq %rax
+    popq %r12
+    popq %rbx
+    movq %rsp,%rbp
+    popq %rbp
+    
+    jmp .func_done
+    
+    
+
+.case_53:
+    pushq %rbp                
+    movq  %rsp, %rbp
+    pushq %rbx                # for using 12,rbx save it
+    pushq %r12    
+
+    movq  %rdi,%rbx           # saving the string
+    movq  %rsi,%r12
+    subq  $16,%rsp
+    
+    movq  $int_format, %rdi
+    leaq  -32(%rbp), %rsi
+    call  scanf
+    
+    movq  $int_format, %rdi
+    leaq  -24(%rbp), %rsi
+    call  scanf
+    
+    movq %rbx,%rdi
+    movq %r12,%rsi
+    movl -32(%rbp),%edx
+    movl -24(%rbp),%ecx
+    
+    call pstrijcpy
+    
+    movq  %rax, %r12
+    movq  $pstrijcpy_char_format,%rdi 
+    movzbq (%r12),%rsi
+    leaq  1(%r12),%rdx
+    xorq  %rax, %rax
+    
+    call printf
+    
+    addq $16,%rsp
+    popq %r12
+    popq %rbx
+    
+    xorq  %rax,%rax
+    movq %rbp,%rsp
+    popq %rbp
+    ## add other string
+   
+
+    jmp .func_done
+    
+
+.case_54:
+    pushq %rbp                
+    movq  %rsp, %rbp               # for using 12,rbx save it
+    pushq %rsi
+    call swap_case 
+    
+    
+    movq  $pstrijcpy_char_format,%rdi 
+    movzbq (%rax),%rsi
+    leaq  1(%rax),%rdx
+    xorq  %rax, %rax
+    call printf      
+    
+    popq %rdi
+    call swap_case 
+    movq  $pstrijcpy_char_format,%rdi 
+    movzbq (%rax),%rsi
+    leaq  1(%rax),%rdx
+    xorq  %rax, %rax
+    call printf      
+        
+    xorq  %rax,%rax
+    movq %rbp,%rsp
+    popq %rbp
+    jmp .func_done
+   
+.case_55:
+subq $50, %rcx
+
+.default:
+subq $50, %rcx
+
+        
+
+
+     
+.globl main
+.type  main,    @function
+main:
+    movq %rsp, %rbp #for correct debugging
+    pushq %rbp
+    movq  %rsp, %rbp #for correct debugging
+    subq  $528,%rsp
+    xorq  %rax,%rax
+    movq  $int_format, %rdi
+    leaq  -528(%rbp), %rsi
+    call  scanf
+      
+    xorq  %rax,%rax
+    movq  $string_format, %rdi
+    leaq  -527(%rbp), %rsi
+    call  scanf
+    xorq  %rcx,%rcx
+    movb  -528(%rbp), %cl
+    leaq  -527(%rbp, %rcx), %r10
+    movq  $0, (%r10)
+    
+
+
+    ######################
+    xorq  %rax,%rax
+    movq  $int_format, %rdi
+    leaq  -271(%rbp), %rsi
+    call  scanf
+
+    
+    xorq  %rax,%rax
+    movq  $string_format, %rdi
+    leaq  -270(%rbp), %rsi
+    call  scanf
+    xorq  %rcx,%rcx
+    movb  -271(%rbp), %cl
+    leaq  -270(%rbp, %rcx), %r10
+    movq  $0, (%r10)
+    
+###################
+    
+    xorq  %rax,%rax
+    movq  $int_format, %rdi
+    leaq  -14(%rbp), %rsi
+    call  scanf
+
+    
+    # for moving the a
+    xorq  %rdx,%rdx
+    movb -14(%rbp), %dl
+    leaq -528(%rbp), %rdi
+    leaq -271(%rbp), %rsi
+    call run_func
+  
+    xorq  %rax,%rax
+    movq  %rbp, %rsp
+    popq  %rbp 
+    ret
+    
